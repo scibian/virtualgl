@@ -1,0 +1,11 @@
+virtualgl (2.4-1+c9+2) calibre9; urgency=medium
+
+  * Rename /usr/bin/glxinfo as /usr/bin/glxinfo-virtualgl
+
+ -- Ana Guerrero <ana-externe.guerrero@edf.fr>  Wed, 09 Nov 2016 17:17:50 +0100
+
+virtualgl (2.4-1+c9+1) calibre9; urgency=low
+
+  * Initial release.
+
+ -- Ana Guerrero <ana-externe.guerrero@edf.fr>  Wed, 09 Nov 2016 14:23:02 +0100

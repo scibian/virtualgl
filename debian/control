@@ -1,0 +1,34 @@
+Source: virtualgl
+Section: misc
+Priority: optional
+Maintainer: Ana Guerrero <ana-externe.guerrero@edf.fr>
+Build-Depends: debhelper (>= 9), cmake, libturbojpeg1-dev,
+ libglu1-mesa-dev, libxv-dev
+Standards-Version: 3.9.5
+Homepage: http://www.VirtualGL.org
+
+Package: virtualgl
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: A toolkit for displaying OpenGL applications to thin clients
+ VirtualGL is a toolkit that allows most Unix/Linux OpenGL applications to be
+ remotely displayed with hardware 3D acceleration to thin clients, regardless
+ of whether the clients have 3D capabilities, and regardless of the size of the
+ 3D data being rendered or the speed of the network.
+ .
+ Using the vglrun script, the VirtualGL "faker" is loaded into an OpenGL
+ application at run time.  The faker then intercepts a handful of GLX calls,
+ which it reroutes to the server's X display (the "3D X Server", which
+ presumably has a 3D accelerator attached.)  The GLX commands are also
+ dynamically modified such that all rendering is redirected into a Pbuffer
+ instead of a window.  As each frame is rendered by the application, the faker
+ reads back the pixels from the 3D accelerator and sends them to the
+ "2D X Server" for compositing into the appropriate X Window.
+ .
+ VirtualGL can be used to give hardware-accelerated 3D capabilities to VNC or
+ other X proxies that either lack OpenGL support or provide it through software
+ rendering.  In a LAN environment, VGL can also be used with its built-in
+ high-performance image transport, which sends the rendered 3D images to a
+ remote client (vglclient) for compositing on a remote X server.  VirtualGL
+ also supports image transport plugins, allowing the rendered 3D images to be
+ sent or captured using other mechanisms.

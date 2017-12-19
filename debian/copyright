@@ -60,6 +60,7 @@ License: wxWindows Library Licence, Version 3.1m
 
 Files: debian/*
 Copyright: 2016 Ana Guerrero <ana-externe.guerrero@edf.fr>
+           2017 Scibian Project <legal@scibian.org>
 License: GPL-2+
  This package is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by

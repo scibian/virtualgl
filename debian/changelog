@@ -1,3 +1,9 @@
+virtualgl (2.4-1sci8u1) scibian8; urgency=medium
+
+  * Scibian8 rebuild.
+
+ -- Thomas Hamel <thomas-externe.hamel@edf.fr>  Tue, 19 Dec 2017 15:54:21 +0100
+
 virtualgl (2.4-1+c9+2) calibre9; urgency=medium
 
   * Rename /usr/bin/glxinfo as /usr/bin/glxinfo-virtualgl

@@ -1,0 +1,24 @@
+* Configuring a Windows Machine as a VGL Transport Client
+
+VirtualGL has the ability to take advantage of the MIT-SHM extension in
+Cygwin/X to accelerate image drawing on Windows.  This can significantly
+improve the overall performance of the VirtualGL pipeline when running over a
+local-area network.
+
+To enable MIT-SHM in Cygwin/X:
+
+	#. Open a Cygwin Bash shell
+
+	#. Run ''cygserver-config''
+
+	#. Answer "yes" when asked "Do you want to install cygserver as service?"
+
+	#. From a Windows (not Cygwin) command prompt, run ''net start cygserver''
+
+	#. Add ''server'' to the ''CYGWIN'' system environment variable (create this
+		environment variable if it doesn't already exist)
+
+	#. Start or re-start Cygwin/X
+
+	#. Run ''xdpyinfo'' and verify that ''MIT-SHM'' appears in the list of 
+		X extensions

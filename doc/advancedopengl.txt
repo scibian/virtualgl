@@ -1,0 +1,221 @@
+* Advanced OpenGL Features
+{anchor: Advanced_OpenGL}
+
+** Stereographic Rendering
+
+Stereographic rendering is a feature of OpenGL that creates separate rendering
+buffers for the left and right eyes and allows the application to render a
+different image into each buffer.  How the stereo images are subsequently
+displayed depends on the particulars of the 3D hardware and the user's
+environment.  VirtualGL can support stereographic applications in one of two
+ways: (1) by sending the stereo image pairs to the client to be displayed in
+stereo by the client's GPU, or (2) by combining each stereo image pair into a
+single image that can be viewed with traditional anaglyphic 3D glasses or a
+passive stereo system, such as a 3D TV.
+
+*** Quad-Buffered Stereo
+
+The name "quad-buffered" stereo refers to the fact that OpenGL uses four
+buffers (left front, right front, left back, and right back) to support
+stereographic rendering with double buffering.  GPUs with quad-buffered stereo
+capabilities generally provide some sort of synchronization signal that can be
+used to control various types of active stereo 3D glasses.  Some also support
+"passive stereo", which requires displaying the left and right eye buffers to
+different monitor outputs.  VirtualGL supports quad-buffered stereo by
+rendering the stereo images on the server and sending the image pairs across
+the network to be displayed on the client.
+
+In most cases, VirtualGL does not require that a GPU be present in the client
+machine.  However, a GPU is required to display stereo image pairs, so one
+must be present in any client machine that will use VirtualGL's quad-buffered
+stereo feature.  Since the GPU is only being used to draw images, it need not
+necessarily be a high-end GPU.  Generally, the least expensive GPU that has
+stereo capabilities will work fine in a VirtualGL client machine.  The
+VirtualGL server must also have a GPU that supports stereo, since this is the
+only way that VirtualGL can obtain a stereo Pbuffer.
+
+When an application tries to render something in stereo, VirtualGL will default
+to using quad-buffered stereo rendering if the 2D X server supports OpenGL
+and has stereo visuals available (not currently supported in Cygwin/X.)
+Otherwise, VirtualGL will fall back to using anaglyphic stereo (see below.)
+It is usually necessary to explicitly enable stereo in the graphics driver
+configuration for both the client and server machines.  The
+[[#Troubleshooting]] section below lists a way to verify that both the 3D X
+server and the 2D X server have stereo visuals available.
+
+In quad-buffered mode, VirtualGL reads back both the left and right eye buffers
+ on the server and sends the contents as a pair of compressed images to the
+VirtualGL Client.  The VirtualGL Client then decompresses both images and draws
+them as a single stereo frame to the client machine's X display using
+''glDrawPixels()''.  It should thus be no surprise that enabling quad-buffered
+stereo in VirtualGL decreases performance by 50% or more and uses twice the
+network bandwidth to maintain the same frame rate as mono.
+
+Quad-buffered stereo requires the VGL Transport.  Attempting to enable it with
+any other image transport will cause VGL to fall back to anaglyphic stereo
+mode.
+
+*** Anaglyphic Stereo
+
+Anaglyphic stereo is the type of stereographic display used by old 3D movies.
+It typically relies on a set of 3D glasses consisting of red transparency film
+over the left eye and cyan transparency film over the right eye, although
+green/magenta and blue/yellow schemes can be used as well.  To generate a
+3D anaglyph, one color channel from the left eye buffer is combined with the
+other two color channels from the right eye buffer, thus allowing a single
+monographic image to contain stereo data.  For instance, in the case of
+red/cyan, the red channel is taken from the left eye buffer, and the green and
+blue channels are taken from the right eye buffer.  From the point of view of
+VirtualGL, an anaglyphic image is the same as a monographic image, so
+anaglyphic stereo images can be sent using any image transport to any type of
+client, regardless of the client's capabilities.
+
+VirtualGL uses anaglyphic stereo if it detects that an application has rendered
+something in stereo but quad-buffered stereo is not available, either because
+the client doesn't support it or because a transport other than the VGL
+Transport is being used.  Anaglyphic stereo provides a cheap and easy way to
+view stereographic applications in X proxies and on clients that do not support
+quad-buffered stereo.  Additionally, anaglyphic stereo performs much faster
+than quad-buffered stereo, since it does not require sending twice the data to
+the client.
+
+As with quad-buffered stereo, anaglyphic stereo requires that the VirtualGL
+server have stereo rendering capabilities.  However, anaglyphic stereo does not
+require any 3D rendering capabilities (stereo or otherwise) on the client
+machine.
+
+*** Passive Stereo
+
+As with anaglyphic stereo, passive stereo combines a stereographic image pair
+into a single image (a "stereogram"), and thus it can be used with any image
+transport.  However, unlike anaglyphic stereo, passive stereo must be used
+with specific display hardware, such as a 3D TV or monitor, that decodes the
+left and right eye images from the stereogram and sends them separately to a
+pair of 3D glasses (typically, this is accomplished by way of polarization.)
+
+VirtualGL supports three methods of encoding stereograms:
+
+	Interleaved :: The even rows of the stereogram are taken from the left eye
+	image, and the odd rows are taken from the right eye image.
+
+	Top/Bottom :: The top half of the stereogram is taken from the left eye
+	image, and the bottom half is taken from the right eye image.  Both halves
+	are subsampled 2X vertically.
+
+	Side-by-Side :: The left half of the stereogram is taken from the left eye
+	image, and the right half is taken from the right eye image.  Both halves are
+	subsampled 2X horizontally.
+
+Most 3D TVs/monitors can be configured to decode at least one of these types
+of stereograms.  In order for this to work, however, the 3D drawing area must
+be full-screen.
+
+*** Selecting a Stereo Mode
+
+A particular stereo mode can be selected by setting the ''VGL_STEREO''
+environment variable or by using the ''-st'' argument to ''vglrun''.  See
+{ref prefix="Section ": VGL_STEREO} for more details.
+
+** Transparent Overlays
+{anchor: overlays}
+
+In the case of transparent overlays, VirtualGL completely bypasses its own GLX
+faker and uses indirect OpenGL rendering to draw to the transparent overlay
+using the 2D X server.  The underlay is still rendered on the 3D X server, read
+back, and sent to the 2D X server, as always.  Using indirect rendering to
+render the overlay is unfortunately necessary, because there is no reliable way
+to draw to an overlay using 2D (X11) functions, there are severe performance
+issues (on some cards) with using ''glDrawPixels()'' to draw to the overlay,
+and there is no reasonable way to composite the overlay and underlay in a
+Pbuffer on the VirtualGL server.
+
+The use of overlays is becoming more and more infrequent, and when they are
+used, it is generally only for drawing small, simple, static shapes and text.
+We have found that it is often faster to ship the overlay geometry over to the
+2D X server rather than to render it as an image and send the image.  Thus,
+even if it were possible to implement overlays without using indirect
+rendering, it is likely that indirect rendering of overlays would still be the
+fastest approach for most applications.
+
+As with quad-buffered stereo, overlays must be explicitly enabled in the
+graphics driver and X server configurations.  In the case of overlays, however,
+they need only be supported and enabled on the client machine and in the 2D X
+server.  Some graphics drivers are known to disallow using both quad-buffered
+stereo and overlays at the same time.  Transparent overlays are not currently
+supported in Cygwin/X.
+
+Indexed color (8-bit) overlays have been tested and are known to work with
+VirtualGL.  True color (24-bit) overlays work, in theory, but have not been
+tested.  Use ''glxinfo'' (see [[#Troubleshooting]] below) to verify whether your
+client's X display supports overlays and whether they are enabled.
+
+** Color Index (PseudoColor) Rendering
+
+In a PseudoColor visual, each pixel is represented by an index that refers to
+a location in a color table.  The color table stores the actual color values
+(256 of them in the case of 8-bit PseudoColor) that correspond to each index.
+An application merely tells the X server which color index to use when drawing,
+and the X server takes care of mapping that index to an actual color from the
+color table.  OpenGL allows for rendering to PseudoColor visuals, and it does
+so by being intentionally ignorant of the relationship between indices and
+actual colors.  As far as OpenGL is concerned, each color index value is just
+a meaningless number, and it is only when the final image is drawn by the X
+server that these numbers take on meaning.  As a result, many pieces of
+OpenGL's core functionality either have undefined behavior or do not work at
+all with PseudoColor rendering.  PseudoColor rendering used to be a common
+technique for visualizing scientific data, because such data often only contained
+8 bits per sample to begin with.  Applications could manipulate the color table
+to allow the user to dynamically control the relationship between sample values
+and colors.  However, since most modern graphics cards have dropped support for
+PseudoColor rendering (it was removed as a feature in OpenGL 3.1), the
+applications that use it have become a vanishing breed.
+
+VirtualGL supports PseudoColor rendering if a PseudoColor visual is available
+on the 2D X server or X proxy.  A PseudoColor visual need not be present on the
+3D X server.  On the 3D X server, VirtualGL uses the red channel
+of a standard RGB Pbuffer to store the color index.  Upon receiving an
+end-of-frame trigger, VirtualGL reads back the red channel of the Pbuffer and uses
+''XPutImage()'' to draw the color indices into the appropriate X window.  To
+put this another way, PseudoColor rendering in VirtualGL always uses the X11
+Transport.  However, since there is only 1 byte per pixel in a PseudoColor
+"image", reasonable performance can still be obtained when displaying to a
+remote X server on the same local-area network.
+
+VirtualGL's PseudoColor rendering mode works with X proxies, provided that the
+X proxy provides a PseudoColor visual.  Note, however, that some X proxies,
+such as VNC, cannot provide both PseudoColor and TrueColor visuals at the same
+time.
+
+** Troubleshooting
+{anchor: Troubleshooting}
+
+VirtualGL includes a modified version of ''glxinfo'' that can be used to
+determine whether or not the 2D and 3D X servers have stereo, overlay, or
+PseudoColor visuals enabled.
+
+Run the following command sequence on the VirtualGL server to determine
+whether the 3D X server has a suitable visual for stereographic rendering:
+
+#Verb: <<---
+xauth merge /etc/opt/VirtualGL/vgl_xauth_key
+/opt/VirtualGL/bin/glxinfo -display :{n} -c -v
+---
+
+(where ''{n}'' is the display number of the 3D X server.)  One or more of the
+visuals should say "stereo=1" and should list "Pbuffer" as one of the "Drawable
+Types."
+
+Run the following command sequence on the VirtualGL server to determine
+whether the 2D X server has a suitable visual for stereographic
+rendering, transparent overlays, or PseudoColor.
+
+#Verb: <<---
+/opt/VirtualGL/bin/glxinfo -v
+---
+
+In order to use stereo, one or more of the visuals should say "stereo=1".
+In order to use transparent overlays, one or more of the visuals should say
+"level=1", should list a "Transparent Index" (non-transparent visuals will say
+"Opaque" instead), and should have a class of "PseudoColor."  In order to use
+PseudoColor (color index) rendering, one of the visuals should have a class of
+"PseudoColor."

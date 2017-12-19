@@ -1,0 +1,107 @@
+* Obtaining and Installing VirtualGL
+
+	!!! VirtualGL must be installed on any machine that will act as a VirtualGL
+	server or as a client for the [[overview.txt#VGL_Transport][VGL Transport]].
+	It is not necessary to install VirtualGL on the client machine if using VNC
+	or another type of X proxy.
+
+** Installing VirtualGL on Linux
+
+	1. Download the appropriate VirtualGL binary package for your system from the
+		[[http://sourceforge.net/projects/virtualgl/files][Files area]]
+		of the [[http://sourceforge.net/projects/virtualgl][VirtualGL SourceForge project page]].
+		Packages are provided for RPM-based and Debian-based Linux distributions
+		that contain GLIBC 2.3.4 or later (including
+		[[http://fedoraproject.org][Fedora]] 4 or later,
+		[[http://www.redhat.com/products/enterprise-linux][Red Hat Enterprise Linux]]/[[http://www.centos.org/][CentOS]] \
+		4 or later,
+		[[http://www.suse.com][SuSE]] Linux Enterprise/[[http://www.opensuse.org][openSUSE]] 10 or later,
+		and [[http://www.ubuntu.com][Ubuntu]] 6.06 or later.)
+		{nl}
+		!!! If you want to run both 32-bit and 64-bit OpenGL applications using
+		VirtualGL on 64-bit Linux systems, then you will need to install both the
+		i386 and x86_64 VirtualGL RPMs or both the "virtualgl" and "virtualgl32"
+		amd64 DEBs.  (The virtualgl32 DEB is a supplementary package that contains
+		only the 32-bit server components.)
+
+	2. Log in as root, cd to the directory where you downloaded the binary
+		package, and issue the following commands:
+
+		RPM-based systems :: {:}
+		#Verb <<---
+		rpm -e VirtualGL
+		rpm -i VirtualGL*.rpm
+		---
+
+		!!! You may need to add ''--all-matches'' to the ''rpm -e'' command line if
+		you have installed both the 32-bit and 64-bit VirtualGL RPMs.
+
+		Debian-based systems :: {:}
+		#Verb <<---
+		dpkg -i virtualgl*.deb
+		---
+
+** Installing the VirtualGL Client on OS X
+
+	#. Download the VirtualGL Mac disk image
+		(''VirtualGL-''__''{version}''__''.dmg'') from the
+		[[http://sourceforge.net/projects/virtualgl/files][Files area]]
+		of the [[http://sourceforge.net/projects/virtualgl][VirtualGL SourceForge project page]].
+
+	#. Open the disk image, then open ''VirtualGL-''__''{version}''__''.pkg'' inside the
+		disk image.  Follow the instructions to install the Mac client.
+
+** Installing the VirtualGL Client on Windows (Cygwin)
+
+Refer to [[http://www.virtualgl.org/Documentation/Cygwin]].
+
+** Installing VirtualGL from Source
+
+If you are using a platform for which there is not a pre-built VirtualGL binary
+package available, then download the VirtualGL source tarball
+(''VirtualGL-''__''{version}''__''.tar.gz'') from the
+[[http://sourceforge.net/projects/virtualgl/files][Files area]]
+of the [[http://sourceforge.net/projects/virtualgl][VirtualGL SourceForge project page]],
+uncompress it, ''cd VirtualGL-''__''{version}''__, and read the contents of
+''BUILDING.txt'' for further instructions on how to build and install VirtualGL
+from source.
+
+** Uninstalling VirtualGL
+
+*** Linux
+#OPT: noList! plain!
+
+As root, issue one of the following commands:
+
+	RPM-based systems :: {:}
+	#Verb: <<---
+	rpm -e VirtualGL
+	---
+
+		!!! You may need to add ''--all-matches'' to the RPM command line if you
+		have installed both the 32-bit and 64-bit VirtualGL RPMs.
+
+	Debian-based systems :: {:}
+	#Verb: <<---
+	dpkg -r virtualgl
+	---
+
+	If you have also installed the 32-bit supplementary package:
+	#Verb: <<---
+	dpkg -r virtualgl32
+	---
+
+*** OS X
+#OPT: noList! plain!
+
+Use the "Uninstall VirtualGL" application provided in the VirtualGL disk image,
+or issue the following command from the Terminal:
+
+#Verb: <<---
+sudo /opt/VirtualGL/bin/uninstall
+---
+
+*** Windows (Cygwin)
+#OPT: noList! plain!
+
+Refer to [[http://www.virtualgl.org/Documentation/Cygwin]].

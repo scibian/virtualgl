@@ -1,0 +1,176 @@
+* Other Application Recipes
+{anchor: Application_Recipes}
+
+|| Application || Platform || Recipe || Notes ||
+| Abaqus v6 | Linux \
+	| It is necessary to add \
+		{nl}{nl} \
+		''import os''{nl} \
+		''os.environ['ABAQUS_EMULATE_OVERLAYS'] = "1"'' \
+		{nl}{nl} \
+		to ''/{abaqus_install_dir}/{abaqus_version}/site/abaqus_v6.env'' to make \
+		Abaqus v6 work properly with VirtualGL if the 2D X server does not \
+		support transparent overlays.  If this is not done, then the application \
+		may fail to launch, fail to display the 3D pixels, or the 3D pixels may \
+		become corrupted whenever other windows obscure them. \
+	| VirtualGL does not redirect the rendering of transparent overlays, since \
+		those cannot be rendered in a Pbuffer.  Thus, in order to use transparent \
+		overlays, the 2D X server must be able to render them, which is rarely \
+		the case for X proxies (see {ref prefix="Section ": overlays} for more \
+		details.)  Setting ''ABAQUS_EMULATE_OVERLAYS'' to ''1'' causes \
+		the application to emulate overlay rendering instead of using actual \
+		transparent overlays.  This workaround is known to be necessary when \
+		running Abaqus 6.9 and 6.10 in VNC. \
+	|
+| Abaqus v6 | Linux \
+	| ''vglrun -nodl {abaqus_path}/abaqus'' \
+	| User reports indicate that Abaqus 6.9 will not work properly if \
+		''libdlfaker.so'' from VirtualGL is preloaded into it.  This may be true \
+		for other versions of Abaqus as well. \
+	|
+| Abaqus v6 | Linux \
+	| Set the ''VGL_DEFAULTFBCONFIG'' environment variable to \
+		''GLX_STENCIL_SIZE,8'' prior to launching the application with ''vglrun'' \
+	| Abaqus 6.10 requires a visual with a stencil buffer, but it does not call \
+		''glXChooseVisual()'' to specify its desire for such a visual.  Thus, \
+		VirtualGL has no idea of the application's preference, and it is \
+		necessary to use ''VGL_DEFAULTFBCONFIG'' to give VirtualGL a hint as to \
+		what the application wants.  Otherwise, VirtualGL will create a Pbuffer \
+		without a stencil buffer, and this will cause incorrect rendering when \
+		using certain functions within Abaqus (such as View Cut.)  See \
+		{ref prefix="Section ": VGL_DEFAULTFBCONFIG} for further information. \
+	|
+| Cadence Allegro v16.5 | Linux \
+	| ''vglrun +sync allegro''  \
+	| Allegro relies on mixed X11/OpenGL rendering, and thus certain features \
+		(specifically the ''pcb_cursor_infinite'' cursor style) do not work \
+		properly unless ''VGL_SYNC'' is enabled.  If ''VGL_SYNC'' is not enabled, \
+		then the crosshairs may remain on the screen.  Since ''VGL_SYNC'' \
+		automatically enables the X11 transport and disables frame spoiling, it \
+		is highly recommended that you use an X proxy when ''VGL_SYNC'' is enabled. \
+		See {ref prefix="Section ": VGL_SYNC} for further information. \
+	|
+| Animator 4 | Linux \
+	| Comment out the line that reads \
+		{nl}{nl} \
+		''unsetenv LD_PRELOAD'' \
+		{nl}{nl} \
+		in the ''a4'' script, then launch Animator 4 using \
+		{nl}{nl} \
+		''vglrun -ge a4'' \
+		{nl}{nl} \
+	| When the ''a4'' script unsets ''LD_PRELOAD'', this prevents VirtualGL \
+		from being loaded into the application.  Animator 4 additionally checks \
+		the value of ''LD_PRELOAD'' and attempts to unset it from inside \
+		the application.  Using ''vglrun -ge'' to launch the application fools \
+		Animator 4 into thinking that ''LD_PRELOAD'' is unset. \
+	|
+| ANSA v12.1.0 | Linux \
+	| Add \
+		{nl}{nl} \
+		''LD_PRELOAD_SAVE=$LD_PRELOAD''{nl} \
+		''export LD_PRELOAD='' \
+		{nl}{nl} \
+		to the top of the ''ansa.sh'' script, then add \
+		{nl}{nl} \
+		''export LD_PRELOAD=$LD_PRELOAD_SAVE'' \
+		{nl}{nl} \
+		just prior to the ''${ANSA_EXEC_DIR}bin/ansa_linux${ext2}'' line. \
+	| The ANSA startup script directly invokes ''/lib/libc.so.6'' to query \
+		the glibc version.  Since the VirtualGL faker depends on libc, preloading \
+		VirtualGL when directly invoking ''libc.so.6'' creates an infinite loop. \
+		Thus, it is necessary to disable the preloading of VirtualGL in the \
+		application script and then re-enable it prior to launching the actual \
+		application. \
+	|
+| ANSYS HFSS, ANSYS ICEM CFD, Roxar RMS | Linux \
+	| Set the ''VGL_SPOILLAST'' environment variable to ''0'' prior to \
+		launching the application with ''vglrun'' \
+	| These applications draw node highlighting and/or rubber banding directly to the \
+		front buffer.  In order for these front buffer operations to be displayed \
+		properly, it is necessary to use the "spoil first" frame spoiling \
+		algorithm whenever the application calls ''glFlush()''.  See \
+		{ref prefix="Section ": VGL_SPOILLAST} for further information. \
+	|
+| AutoForm v4.0x | All \
+	| ''vglrun +sync xaf_''__''{version}''__ \
+	| AutoForm relies on mixed X11/OpenGL rendering, and thus certain features \
+		(particularly the "Dynamic Section" dialog and "Export Image" feature) do \
+		not work properly unless ''VGL_SYNC'' is enabled.  Since ''VGL_SYNC'' \
+		automatically enables the X11 transport and disables frame spoiling, it \
+		is highly recommended that you use an X proxy when ''VGL_SYNC'' is enabled. \
+		See {ref prefix="Section ": VGL_SYNC} for further information. \
+	|
+| Cedega v6.0.x | Linux \
+	| Add \
+		{nl}{nl} \
+		''export LD_PRELOAD=librrfaker.so'' \
+		{nl}{nl} \
+		to the top of ''~/.cedega/.winex_ver/winex-{version}/bin/winex3'', then \
+		run Cedega as you would normally (without ''vglrun''.)  Since ''vglrun'' \
+		is not being used, it is necessary to use environment variables or the \
+		VirtualGL Configuration dialog to modify VirtualGL's configuration. \
+	| The actual binary (WineX) that uses OpenGL is buried beneath several \
+		layers of Python and shell scripts.  The ''LD_PRELOAD'' variable does not \
+		get propagated down from the initial shell that invoked ''vglrun''. \
+	|
+| Google Chrome/Chromium v31 and later | Linux \
+	| ''vglrun google-chrome --disable-gpu-sandbox''{nl} \
+		or{nl} \
+		''vglrun chromium --disable-gpu-sandbox'' \
+	| By default, Chrome/Chromium uses a separate process to perform 3D \
+		rendering (WebGL), and for reasons that are not yet fully understood, \
+		this breaks VirtualGL.  The ''--disable-gpu-sandbox'' option causes 3D \
+		rendering to be performed within the browser process. \
+	|
+| Compiz | Linux \
+	| Set the ''VGL_WM'' environment variable to ''1'' prior to launching the \
+		window manager with ''vglrun'', or pass an argument of ''+wm'' to \
+		''vglrun''. \
+	| See {ref prefix="Section ": VGL_WM} for further information. \
+	|
+| Heretic II | Linux \
+	| ''vglrun heretic2 +set vid_ref glx'' \
+	| {:} \
+	|
+| MAGMA5 | Linux \
+	| Set the ''VGL_DEFAULTFBCONFIG'' environment variable to \
+		''GLX_STENCIL_SIZE,8'' prior to launching the application with ''vglrun'' \
+	| MAGMA5 requires a visual with a stencil buffer, but it does not call \
+		''glXChooseVisual()'' to specify its desire for such a visual.  Thus, \
+		VirtualGL has no idea of the application's preference, and it is \
+		necessary to use ''VGL_DEFAULTFBCONFIG'' to give VirtualGL a hint as to \
+		what the application wants.  Otherwise, VirtualGL will create a Pbuffer \
+		without a stencil buffer, and this will cause incorrect rendering when \
+		using certain functions within MAGMA5.  See \
+		{ref prefix="Section ": VGL_DEFAULTFBCONFIG} for further information. \
+	|
+| Mathematica 7 | Linux \
+	| Set the ''VGL_ALLOWINDIRECT'' environment variable to ''1'' prior to \
+		launching the application with ''vglrun'' \
+	| Mathematica 7 will not draw the axis numbers on 3D charts correctly \
+		unless it is allowed to create an indirect OpenGL context.  See \
+		{ref prefix="Section ": VGL_ALLOWINDIRECT} for further information. \
+	|
+| Qt 5 Applications | Linux \
+	| Build and install VirtualGL from source, adding ''-DVGL_FAKEXCB=1'' to \
+		the CMake command line.  Set the ''VGL_FAKEXCB'' environment variable to \
+		''1'' prior to launching the application with ''vglrun'', or pass an \
+		argument of ''+xcb'' to ''vglrun''. \
+	| Although Qt 5 uses GLX to interface between X11 and OpenGL, it \
+		uses XCB instead of Xlib to perform all other X11-related functions. \
+		Thus, VirtualGL has to interpose enough of the XCB API to allow it to \
+		intercept window resize events and to make Qt 5 believe that a GLX \
+		extension is present, even when the 2D X server doesn't support GLX. \
+		Because XCB is only available on newer platforms, this feature is not \
+		built into the "official" VirtualGL binary packages. \
+	|
+| Tecplot 360 2011 and earlier | Linux \
+	| Set the ''VGL_GLFLUSHTRIGGER'' environment variable to ''0'' prior to \
+		launching the application with ''vglrun'' \
+	| When running in TurboVNC (using VirtualGL), flashing artifacts will be \
+		produced when the user zooms/pans/rotates the scene in Tecplot 360, \
+		unless VirtualGL is instructed not to use ''glFlush()'' as an \
+		end-of-frame trigger.  This has been fixed in Tecplot 2012 and later. \
+		See {ref prefix="Section ": VGL_GLFLUSHTRIGGER} for further information. \
+	|
